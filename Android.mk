@@ -27,6 +27,10 @@ ifneq ($(TARGET_SIMULATOR),true)
     WPA_BUILD_SUPPLICANT := true
     CONFIG_DRIVER_$(BOARD_WPA_SUPPLICANT_DRIVER) = y
   endif
+  ifeq ($(BOARD_HAVE_WIFI),true)
+    WPA_BUILD_SUPPLICANT := true
+    CONFIG_DRIVER_WEXT = y
+  endif
 endif
 
 include $(LOCAL_PATH)/.config

@@ -1396,8 +1396,17 @@ int wpa_driver_wext_get_scan_results(void *priv,
 		case IWEVQUAL:
 			if (ap_num < max_size) {
 				results[ap_num].qual = iwe->u.qual.qual;
-				results[ap_num].noise = iwe->u.qual.noise;
-				results[ap_num].level = iwe->u.qual.level;
+				if( iwe->u.qual.updated & IW_QUAL_DBM )
+				{
+					/* Values in dBm, stored in u8 with range 63 : -192 */
+					results[ap_num].noise = ( iwe->u.qual.noise > 63 ) ? iwe->u.qual.noise - 0x100 : iwe->u.qual.noise;
+					results[ap_num].level = ( iwe->u.qual.level > 63 ) ? iwe->u.qual.level - 0x100 : iwe->u.qual.level;
+				}
+				else
+				{
+					results[ap_num].noise = iwe->u.qual.noise;
+					results[ap_num].level = iwe->u.qual.level;
+				}
 			}
 			break;
 		case SIOCGIWENCODE:

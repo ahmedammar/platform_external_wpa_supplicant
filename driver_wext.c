@@ -84,7 +84,6 @@ struct wpa_driver_wext_data {
 	char mlmedev[IFNAMSIZ + 1];
 
 	int scan_complete_events;
-	int errors;
 };
 
 
@@ -584,8 +583,8 @@ static void wpa_driver_wext_event_wireless(struct wpa_driver_wext_data *drv,
 				drv->assoc_req_ies = NULL;
 				os_free(drv->assoc_resp_ies);
 				drv->assoc_resp_ies = NULL;
-				wpa_supplicant_event(ctx, EVENT_DISASSOC,
-						     NULL);
+				//wpa_supplicant_event(ctx, EVENT_DISASSOC,
+				//	     NULL);
 			
 			} else {
 				wpa_driver_wext_event_assoc_ies(drv);
@@ -1002,7 +1001,6 @@ void * wpa_driver_wext_init(void *ctx, const char *ifname)
 
 	drv->mlme_sock = -1;
 
-	drv->errors = 0;
 	wpa_driver_wext_finish_drv_init(drv);
 
 	return drv;
@@ -1396,8 +1394,17 @@ int wpa_driver_wext_get_scan_results(void *priv,
 		case IWEVQUAL:
 			if (ap_num < max_size) {
 				results[ap_num].qual = iwe->u.qual.qual;
-				results[ap_num].noise = iwe->u.qual.noise;
-				results[ap_num].level = iwe->u.qual.level;
+				if( iwe->u.qual.updated & IW_QUAL_DBM )
+				{
+					/* Values in dBm, stored in u8 with range 63 : -192 */
+					results[ap_num].noise = ( iwe->u.qual.noise > 63 ) ? iwe->u.qual.noise - 0x100 : iwe->u.qual.noise;
+					results[ap_num].level = ( iwe->u.qual.level > 63 ) ? iwe->u.qual.level - 0x100 : iwe->u.qual.level;
+				}
+				else
+				{
+					results[ap_num].noise = iwe->u.qual.noise;
+					results[ap_num].level = iwe->u.qual.level;
+				}
 			}
 			break;
 		case SIOCGIWENCODE:
@@ -2544,14 +2551,10 @@ static int wpa_driver_priv_driver_cmd(void *priv, char *cmd, char *buf, size_t b
 	else if (os_strcasecmp(cmd, "STOP") == 0) {
 		if ((wpa_driver_wext_get_ifflags(drv, &flags) == 0) &&
 		    (flags & IFF_UP)) {
-			wpa_printf(MSG_ERROR, "WEXT: %s when iface is UP", cmd);
+			wpa_printf(MSG_ERROR, "WEXT: %s when iface is UP",
+				cmd);
 			wpa_driver_wext_set_ifflags(drv, flags & ~IFF_UP);
 		}
-	}
-	else if( os_strcasecmp(cmd, "RELOAD") == 0 ) {
-		wpa_printf(MSG_DEBUG,"Reload command");
-		wpa_msg(drv->ctx, MSG_INFO, WPA_EVENT_DRIVER_STATE "HANGED");
-		return ret;
 	}
 
 	os_memset(&iwr, 0, sizeof(iwr));
@@ -2564,16 +2567,9 @@ static int wpa_driver_priv_driver_cmd(void *priv, char *cmd, char *buf, size_t b
 		perror("ioctl[SIOCSIWPRIV]");
 	}
 
-	if (ret < 0) {
+	if (ret < 0)
 		wpa_printf(MSG_ERROR, "%s failed", __func__);
-		drv->errors++;
-		if (drv->errors > WEXT_NUMBER_SEQUENTIAL_ERRORS) {
-			drv->errors = 0;
-			wpa_msg(drv->ctx, MSG_INFO, WPA_EVENT_DRIVER_STATE "HANGED");
-		}
-	}
 	else {
-		drv->errors = 0;
 		ret = 0;
 		if ((os_strcasecmp(cmd, "RSSI") == 0) ||
 		    (os_strcasecmp(cmd, "LINKSPEED") == 0) ||

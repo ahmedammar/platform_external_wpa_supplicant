@@ -27,6 +27,11 @@ ifneq ($(TARGET_SIMULATOR),true)
     WPA_BUILD_SUPPLICANT := true
     CONFIG_DRIVER_$(BOARD_WPA_SUPPLICANT_DRIVER) = y
   endif
+  ifeq ($(BOARD_HAVE_WIFI),true)
+    WPA_BUILD_SUPPLICANT := true
+    CONFIG_DRIVER_WEXT = y
+    CONFIG_DRIVER_AWEXT = y
+  endif
 endif
 
 include $(LOCAL_PATH)/.config
@@ -93,6 +98,12 @@ endif
 ifdef CONFIG_DRIVER_HOSTAP
 L_CFLAGS += -DCONFIG_DRIVER_HOSTAP
 OBJS_d += driver_hostap.c
+CONFIG_WIRELESS_EXTENSION=y
+endif
+
+ifdef CONFIG_DRIVER_AWEXT
+L_CFLAGS += -DCONFIG_DRIVER_AWEXT
+OBJS_d += driver_awext.c
 CONFIG_WIRELESS_EXTENSION=y
 endif
 
@@ -698,17 +709,17 @@ include $(BUILD_EXECUTABLE)
 #include $(BUILD_EXECUTABLE)
 #
 ########################
-#
-#local_target_dir := $(TARGET_OUT)/etc/wifi
-#
-#include $(CLEAR_VARS)
-#LOCAL_MODULE := wpa_supplicant.conf
-#LOCAL_MODULE_TAGS := user
-#LOCAL_MODULE_CLASS := ETC
-#LOCAL_MODULE_PATH := $(local_target_dir)
-#LOCAL_SRC_FILES := $(LOCAL_MODULE)
-#include $(BUILD_PREBUILT)
-#
+
+local_target_dir := $(TARGET_OUT)/etc/wifi
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := wpa_supplicant.conf
+LOCAL_MODULE_TAGS := user
+LOCAL_MODULE_CLASS := ETC
+LOCAL_MODULE_PATH := $(local_target_dir)
+LOCAL_SRC_FILES := $(LOCAL_MODULE)
+include $(BUILD_PREBUILT)
+
 ########################
 
 endif # ifeq ($(WPA_BUILD_SUPPLICANT),true)

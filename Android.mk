@@ -30,6 +30,7 @@ ifneq ($(TARGET_SIMULATOR),true)
   ifeq ($(BOARD_HAVE_WIFI),true)
     WPA_BUILD_SUPPLICANT := true
     CONFIG_DRIVER_WEXT = y
+    CONFIG_DRIVER_AWEXT = y
   endif
 endif
 
@@ -97,6 +98,12 @@ endif
 ifdef CONFIG_DRIVER_HOSTAP
 L_CFLAGS += -DCONFIG_DRIVER_HOSTAP
 OBJS_d += driver_hostap.c
+CONFIG_WIRELESS_EXTENSION=y
+endif
+
+ifdef CONFIG_DRIVER_AWEXT
+L_CFLAGS += -DCONFIG_DRIVER_AWEXT
+OBJS_d += driver_awext.c
 CONFIG_WIRELESS_EXTENSION=y
 endif
 

@@ -583,8 +583,8 @@ static void wpa_driver_wext_event_wireless(struct wpa_driver_wext_data *drv,
 				drv->assoc_req_ies = NULL;
 				os_free(drv->assoc_resp_ies);
 				drv->assoc_resp_ies = NULL;
-				wpa_supplicant_event(ctx, EVENT_DISASSOC,
-						     NULL);
+				//wpa_supplicant_event(ctx, EVENT_DISASSOC,
+				//	     NULL);
 			
 			} else {
 				wpa_driver_wext_event_assoc_ies(drv);
